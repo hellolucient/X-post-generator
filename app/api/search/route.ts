@@ -115,7 +115,7 @@ async function searchGoogle(searchTerm: string) {
     fetch(imageUrl)
   ]);
 
-  const [webData, twitterData, imageData] = await Promise.all([
+  const [webData, twitterData, imageData]: [GoogleSearchResponse, GoogleSearchResponse, GoogleSearchResponse] = await Promise.all([
     webResponse.json(),
     twitterResponse.json(),
     imageResponse.json()
@@ -152,7 +152,7 @@ async function searchGoogle(searchTerm: string) {
   });
 }
 
-function getRelevanceScore(result: any, searchTerm: string): number {
+function getRelevanceScore(result: { title: string; snippet: string; isTwitter: boolean }, searchTerm: string): number {
   let score = 0;
   const terms = searchTerm.toLowerCase().split(' ');
 
