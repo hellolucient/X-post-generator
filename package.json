@@ -14,7 +14,6 @@
     "openai": "^4.68.4",
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
-    "react-hot-toast": "^2.4.1",
     "twitter-api-v2": "^1.18.1"
   },
   "devDependencies": {
