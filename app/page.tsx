@@ -14,18 +14,16 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [availableImages, setAvailableImages] = useState<string[][]>([[]]);
   const [refreshCounts, setRefreshCounts] = useState<{ [key: number]: number }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ searchTerm: query }),
-      });
-      const data = await response.json();
-      setSearchResults(data);
+      // Your search logic here
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error('Search error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -165,6 +163,7 @@ export default function Home() {
               results={searchResults} 
               onSelectResult={handleSelectResult}
               isGenerating={isGenerating}
+              loading={isLoading} // Add this line
             />
           )}
         </div>

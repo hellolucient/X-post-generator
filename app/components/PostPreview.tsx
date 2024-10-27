@@ -36,7 +36,7 @@ const PostPreview: React.FC<PostPreviewProps> = ({
     console.log('PostPreview received content:', content);
     console.log('Tweet number:', tweetNumber);
     setEditedContent(content);
-  }, [content]);
+  }, [content, tweetNumber]); // Add tweetNumber to the dependency array
 
   const getAdjustedLength = (text: string) => {
     if (typeof text !== 'string') {

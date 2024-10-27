@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server';
 // import axios from 'axios';
 
 // Twitter API Client
-import { TwitterApi, TweetV2 } from 'twitter-api-v2';
+// import { TwitterApi, TweetV2 } from 'twitter-api-v2';
 
-const twitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY!,
-  appSecret: process.env.TWITTER_API_SECRET!,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN!,
-  accessSecret: process.env.TWITTER_ACCESS_SECRET!,
-});
+// const twitterClient = new TwitterApi({
+//   appKey: process.env.TWITTER_API_KEY!,
+//   appSecret: process.env.TWITTER_API_SECRET!,
+//   accessToken: process.env.TWITTER_ACCESS_TOKEN!,
+//   accessSecret: process.env.TWITTER_ACCESS_SECRET!,
+// });
 
 interface GoogleSearchItem {
   cacheId?: string;

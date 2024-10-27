@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GoogleResult, TwitterResult, SearchResult } from '../types/search';
+import { GoogleResult, SearchResult } from '../types/search';
 
 interface SearchResultsProps {
   results: SearchResult;
   onSelectResult: (content: string, type: 'tweet' | 'thread') => void;
-  isGenerating: boolean;
+  loading: boolean;
+  isGenerating: boolean; // Add this line
 }
 
 type FilterType = 'all' | 'google' | 'twitter';
@@ -21,7 +22,7 @@ interface Notification {
   };
 }
 
-export default function SearchResults({ results, onSelectResult, isGenerating }: SearchResultsProps) {
+export default function SearchResults({ results, onSelectResult, loading, isGenerating }: SearchResultsProps) {
   const [generatingFor, setGeneratingFor] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notification | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
