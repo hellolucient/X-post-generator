@@ -20,6 +20,8 @@ export default function Home() {
     setIsLoading(true);
     try {
       // Your search logic here
+      const results = await fetchSearchResults(); // Implement this function
+      setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
     } finally {

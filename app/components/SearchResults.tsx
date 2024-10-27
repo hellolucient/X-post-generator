@@ -43,7 +43,7 @@ export default function SearchResults({ results, onSelectResult, loading, isGene
   });
 
   const handleGenerate = async (result: GoogleResult, type: 'tweet' | 'thread') => {
-    const tryGenerate = async (retryCount = 0) => {
+    const tryGenerate = async () => {
       try {
         setNotification(null);
         setGeneratingFor(`${result.id}-${type}`);
@@ -77,6 +77,12 @@ export default function SearchResults({ results, onSelectResult, loading, isGene
 
     await tryGenerate();
   };
+
+  // Use loading and isGenerating in your component logic
+  // For example:
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">

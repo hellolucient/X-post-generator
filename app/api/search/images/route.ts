@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(searchTerm)}&searchType=image&num=7&start=${start}`;
     
     const response: Response = await fetch(imageUrl);
-    const data = await response.json();
+    const data: { images?: string[] } = await response.json();
 
     if (!response.ok) {
       throw new Error('Failed to fetch image search results');

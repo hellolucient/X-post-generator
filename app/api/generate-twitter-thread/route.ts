@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 // Add interface for tweet content
-interface TweetContent {
-  tweet: string;
-}
+// interface TweetContent {
+//   tweet: string;
+// }
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
