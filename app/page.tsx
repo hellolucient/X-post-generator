@@ -1,101 +1,183 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState } from 'react';
+import SearchForm from './components/SearchForm';
+import SearchResults from './components/SearchResults';
+import TwitterThreadGenerator from './components/TwitterThreadGenerator';
+import { SearchResult } from './types/search';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
+  const [thread, setThread] = useState<{ tweet: string; imageUrl: string | null }[]>([
+    { tweet: '', imageUrl: null }
+  ]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [availableImages, setAvailableImages] = useState<string[][]>([[]]);
+  const [refreshCounts, setRefreshCounts] = useState<{ [key: number]: number }>({});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleSearch = async (query: string) => {
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchTerm: query }),
+      });
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
+  };
+
+  const handleSelectResult = async (content: string, type: 'tweet' | 'thread') => {
+    try {
+      setIsGenerating(true);
+      const endpoint = type === 'tweet' 
+        ? '/api/generate-tweet'
+        : '/api/generate-twitter-thread';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ searchResult: content }),
+      });
+
+      const data = await response.json();
+      console.log('Response data:', data); // Add this for debugging
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || `Failed to generate ${type}`);
+      }
+
+      // Handle single tweet
+      if (type === 'tweet') {
+        if (typeof data.content !== 'string') {
+          throw new Error('Invalid tweet content received');
+        }
+        setThread([{ tweet: data.content, imageUrl: null }]);
+        // Initialize images for single tweet
+        if (searchResults?.google[0]?.images) {
+          setAvailableImages([[...searchResults.google[0].images]]);
+        }
+      } 
+      // Handle thread
+      else {
+        if (!Array.isArray(data.content)) {
+          throw new Error('Invalid thread content received');
+        }
+        const newThread = data.content.map((item: { tweet: string }) => ({
+          tweet: item.tweet,
+          imageUrl: null
+        }));
+        setThread(newThread);
+        // Initialize images for thread
+        if (searchResults?.google[0]?.images) {
+          const initialImages = Array(newThread.length)
+            .fill(null)
+            .map(() => [...searchResults.google[0].images]);
+          setAvailableImages(initialImages);
+        }
+      }
+
+      // Reset refresh counts
+      setRefreshCounts({});
+    } catch (error) {
+      console.error(`Error generating ${type}:`, error);
+      throw error;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRefreshImages = async (query: string, tweetNumber?: number) => {
+    try {
+      // Check refresh count before making the request
+      if (!query && tweetNumber !== undefined) {
+        const currentCount = refreshCounts[tweetNumber] || 0;
+        if (currentCount >= 3) {
+          alert('Please enter a more specific image request');
+          return;
+        }
+      }
+
+      const searchTerm = query || searchResults?.google[0]?.title || '';
+      const offset = Math.floor(Math.random() * 50);
+      
+      const response = await fetch('/api/search/images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          searchTerm,
+          start: offset
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.images) {
+        throw new Error('Failed to fetch images');
+      }
+
+      if (tweetNumber !== undefined) {
+        setAvailableImages(prevImages => {
+          const newImages = [...prevImages];
+          while (newImages.length <= tweetNumber) {
+            newImages.push([]);
+          }
+          newImages[tweetNumber - 1] = data.images;
+          return newImages;
+        });
+
+        // Update refresh count only if no custom query
+        if (!query) {
+          setRefreshCounts(prev => ({
+            ...prev,
+            [tweetNumber]: (prev[tweetNumber] || 0) + 1
+          }));
+        } else {
+          // Reset count if using custom query
+          setRefreshCounts(prev => ({
+            ...prev,
+            [tweetNumber]: 0
+          }));
+        }
+      } else {
+        const initialImages = Array(thread.length)
+          .fill(null)
+          .map(() => [...data.images]);
+        setAvailableImages(initialImages);
+      }
+    } catch (error) {
+      console.error('Failed to refresh images:', error);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">X Post Generator</h1>  {/* Changed from "Twitter Thread Generator" */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <SearchForm onSearch={handleSearch} />
+          {searchResults && (
+            <SearchResults 
+              results={searchResults} 
+              onSelectResult={handleSelectResult}
+              isGenerating={isGenerating}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div className="sticky top-4">
+          <TwitterThreadGenerator
+            initialThread={thread}
+            availableImages={availableImages}
+            onThreadChange={setThread}
+            onRefreshImages={handleRefreshImages}
+            refreshCounts={refreshCounts}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      </div>
     </div>
   );
 }
