@@ -16,11 +16,22 @@ export default function Home() {
   const [refreshCounts, setRefreshCounts] = useState<{ [key: number]: number }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = async () => {
+  const handleSearch = async (query: string) => {
     setIsLoading(true);
     try {
-      // Your search logic here
-      const results = await fetchSearchResults(); // Implement this function
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ searchTerm: query }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const results: SearchResult = await response.json();
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);

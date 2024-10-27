@@ -6,7 +6,7 @@ interface SearchFormProps {
   onSearch: (query: string) => void;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
+export default function SearchForm({ onSearch }: SearchFormProps) {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,6 +28,4 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
       </button>
     </form>
   );
-};
-
-export default SearchForm;
+}

@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-interface TweetContent {
-  tweet: string;
-}
+// Remove or comment out the unused import
+// import { TweetContent } from '../../types';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

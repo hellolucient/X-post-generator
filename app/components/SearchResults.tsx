@@ -84,6 +84,9 @@ export default function SearchResults({ results, onSelectResult, loading, isGene
     return <div>Loading...</div>;
   }
 
+  // Use isGenerating to disable buttons when generating
+  const isButtonDisabled = isGenerating || generatingFor !== null;
+
   return (
     <div className="space-y-8">
       {notification && (
@@ -162,11 +165,11 @@ export default function SearchResults({ results, onSelectResult, loading, isGene
                 <button 
                   onClick={() => handleGenerate(result, 'tweet')}
                   className={`px-3 py-1 w-[150px] text-center ${
-                    generatingFor === `${result.id}-tweet`
+                    isButtonDisabled
                       ? 'bg-yellow-500 cursor-not-allowed' 
                       : 'bg-blue-500 hover:bg-blue-600'
                   } text-white rounded relative`}
-                  disabled={generatingFor !== null}
+                  disabled={isButtonDisabled}
                 >
                   {generatingFor === `${result.id}-tweet` ? (
                     <>
@@ -182,11 +185,11 @@ export default function SearchResults({ results, onSelectResult, loading, isGene
                 <button 
                   onClick={() => handleGenerate(result, 'thread')}
                   className={`px-3 py-1 w-[150px] text-center ${
-                    generatingFor === `${result.id}-thread`
+                    isButtonDisabled
                       ? 'bg-yellow-500 cursor-not-allowed' 
                       : 'bg-green-500 hover:bg-green-600'
                   } text-white rounded relative overflow-hidden`}
-                  disabled={generatingFor !== null}
+                  disabled={isButtonDisabled}
                 >
                   {generatingFor === `${result.id}-thread` ? (
                     <>
