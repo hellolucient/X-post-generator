@@ -100,26 +100,6 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
     }
   };
 
-  const handleImageUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch('/api/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-
-      return data.url;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
-    }
-  };
-
   return (
     <div>
       {thread.map(({ tweet, imageUrl }, index) => {
@@ -159,7 +139,7 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
               : 'bg-blue-500 hover:bg-blue-600'
           } text-white font-medium`}
         >
-          {isPosting ? 'Posting...' : 'Post to Twitter'}
+          {isPosting ? 'Posting...' : 'Post to X'}
         </button>
         
         {postError && (
