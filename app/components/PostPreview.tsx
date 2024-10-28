@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ImageSelector from './ImageSelector';
+import { ChangeEvent } from 'react';
 
 interface PostPreviewProps {
   content: string;
@@ -14,6 +15,7 @@ interface PostPreviewProps {
   tweetNumber?: number;
   totalTweets?: number;
   refreshCount: number;  // Add this
+  onUploadImage: (file: File) => Promise<void>;  // Add this
 }
 
 const TWITTER_CHAR_LIMIT = 280;
@@ -28,7 +30,8 @@ const PostPreview: React.FC<PostPreviewProps> = ({
   onRefreshImages,
   tweetNumber,
   totalTweets,
-  refreshCount
+  refreshCount,
+  onUploadImage
 }) => {
   const [editedContent, setEditedContent] = useState(content);
 
@@ -62,6 +65,13 @@ const PostPreview: React.FC<PostPreviewProps> = ({
     if (adjustedLength > TWITTER_CHAR_LIMIT - 10) return 'text-red-500';
     if (adjustedLength > TWITTER_CHAR_LIMIT - 20) return 'text-yellow-500';
     return 'text-gray-500';
+  };
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onUploadImage(file);
+    }
   };
 
   return (
@@ -117,6 +127,7 @@ const PostPreview: React.FC<PostPreviewProps> = ({
         onRefreshImages={onRefreshImages}
         tweetNumber={tweetNumber}
         refreshCount={refreshCount}
+        onUploadImage={handleImageUpload}
       />
     </div>
   );

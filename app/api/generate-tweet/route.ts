@@ -13,6 +13,10 @@ export async function POST(req: Request) {
     const { searchResult } = await req.json();
     console.log('Received search result:', searchResult);
 
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
     const prompt = `
       Create a single engaging tweet based on this content:
       ${searchResult}
@@ -39,12 +43,14 @@ export async function POST(req: Request) {
       throw new Error('No tweet content generated');
     }
 
-    // Return the content directly, not wrapped in an array
     return NextResponse.json({ content: tweetContent });
   } catch (error) {
     console.error('Error generating tweet:', error);
     return NextResponse.json(
-      { error: 'Failed to generate tweet' },
+      { 
+        error: error instanceof Error ? error.message : 'Failed to generate tweet',
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

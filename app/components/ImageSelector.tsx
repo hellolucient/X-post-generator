@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import Image from 'next/image';
 
 interface ImageSelectorProps {
@@ -10,6 +10,7 @@ interface ImageSelectorProps {
   selectedImage: string | null;
   tweetNumber?: number;
   refreshCount: number;
+  onUploadImage: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function ImageSelector({ 
@@ -18,7 +19,8 @@ export default function ImageSelector({
   onSelectImage, 
   selectedImage,
   tweetNumber,
-  refreshCount
+  refreshCount,
+  onUploadImage
 }: ImageSelectorProps) {
   const [customQuery, setCustomQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +95,23 @@ export default function ImageSelector({
             />
           </div>
         ))}
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Upload your own image
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={onUploadImage}
+          className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+        />
       </div>
     </div>
   );

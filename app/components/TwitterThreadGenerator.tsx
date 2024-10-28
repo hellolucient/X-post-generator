@@ -5,10 +5,11 @@ import PostPreview from './PostPreview';
 
 interface TwitterThreadGeneratorProps {
   initialThread: { tweet: string; imageUrl: string | null }[];
-  availableImages: string[][];  // Change this from string[] to string[][]
-  onThreadChange: (newThread: { tweet: string; imageUrl: string | null }[]) => void;
+  availableImages: string[][];
+  onThreadChange: (thread: { tweet: string; imageUrl: string | null }[]) => void;
   onRefreshImages: (query: string, tweetNumber?: number) => Promise<void>;
   refreshCounts: { [key: number]: number };
+  onUploadImage: (file: File) => Promise<void>;
 }
 
 const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({ 
@@ -16,9 +17,12 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
   availableImages, 
   onThreadChange,
   onRefreshImages,
-  refreshCounts
+  refreshCounts,
+  onUploadImage
 }) => {
   const [thread, setThread] = useState<{ tweet: string; imageUrl: string | null }[]>(initialThread);
+  const [isPosting, setIsPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('Initial thread received:', initialThread);
@@ -62,6 +66,60 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
     }
   };
 
+  const handlePostToTwitter = async () => {
+    setIsPosting(true);
+    setPostError(null);
+    
+    try {
+      const response = await fetch('/api/post-thread', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tweets: thread.map(t => ({
+            text: t.tweet,
+            imageUrl: t.imageUrl
+          }))
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to post thread');
+      }
+
+      // Show success message or redirect to Twitter
+      window.open(`https://twitter.com/i/status/${data.tweets[0].data.id}`, '_blank');
+    } catch (error) {
+      console.error('Error posting thread:', error);
+      setPostError(error instanceof Error ? error.message : 'Failed to post thread');
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      return data.url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   return (
     <div>
       {thread.map(({ tweet, imageUrl }, index) => {
@@ -72,13 +130,14 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
             <PostPreview
               content={tweet}
               imageUrl={imageUrl}
-              availableImages={availableImages[index] || []}  // Get images for this specific tweet
+              availableImages={availableImages[index] || []}
               onSelectImage={(newImageUrl) => handleImageSelect(index, newImageUrl)}
               onContentChange={(newContent) => handleTweetChange(index, newContent)}
               onRefreshImages={handleImageRefresh}
               tweetNumber={index + 1}
               totalTweets={thread.length}
               refreshCount={refreshCounts[index + 1] || 0}
+              onUploadImage={onUploadImage}
             />
             <button onClick={() => removeTweet(index)} className="mt-2 p-1 bg-red-500 text-white rounded">
               Remove Tweet
@@ -89,6 +148,26 @@ const TwitterThreadGenerator: React.FC<TwitterThreadGeneratorProps> = ({
       <button onClick={addTweet} className="p-2 bg-blue-500 text-white rounded">
         Add Tweet
       </button>
+      
+      <div className="mt-4">
+        <button
+          onClick={handlePostToTwitter}
+          disabled={isPosting}
+          className={`w-full py-2 px-4 rounded ${
+            isPosting 
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-500 hover:bg-blue-600'
+          } text-white font-medium`}
+        >
+          {isPosting ? 'Posting...' : 'Post to Twitter'}
+        </button>
+        
+        {postError && (
+          <div className="mt-2 text-red-500 text-sm">
+            {postError}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

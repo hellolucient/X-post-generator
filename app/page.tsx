@@ -47,6 +47,9 @@ export default function Home() {
         ? '/api/generate-tweet'
         : '/api/generate-twitter-thread';
 
+      console.log('Sending request to:', endpoint);
+      console.log('With content:', content);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -56,15 +59,20 @@ export default function Home() {
       });
 
       const data = await response.json();
-      console.log('Response data:', data); // Add this for debugging
+      console.log('Response data:', data);
 
-      if (!response.ok || data.error) {
-        throw new Error(data.error || `Failed to generate ${type}`);
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to generate ${type}: ${data.details || 'Unknown error'}`);
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       // Handle single tweet
       if (type === 'tweet') {
         if (typeof data.content !== 'string') {
+          console.error('Invalid content received:', data);
           throw new Error('Invalid tweet content received');
         }
         setThread([{ tweet: data.content, imageUrl: null }]);
@@ -165,6 +173,33 @@ export default function Home() {
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      // Update the thread with the new image URL
+      setThread(currentThread => {
+        const newThread = [...currentThread];
+        if (newThread[0]) {
+          newThread[0].imageUrl = data.url;
+        }
+        return newThread;
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      // Handle error (show message to user)
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">X Post Generator</h1>  {/* Changed from "Twitter Thread Generator" */}
@@ -187,6 +222,7 @@ export default function Home() {
             onThreadChange={setThread}
             onRefreshImages={handleRefreshImages}
             refreshCounts={refreshCounts}
+            onUploadImage={handleImageUpload}
           />
         </div>
       </div>
